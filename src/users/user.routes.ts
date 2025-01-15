@@ -8,6 +8,7 @@ const router = Router();
 router
   .post(
     "/register",
+    roleAuth(["ADMIN"]),
     UserValidation.createUser,
     catchError,
     UserController.createUser
@@ -19,7 +20,17 @@ router
     UserController.loginUser
   )
   .get("/all", roleAuth(["ADMIN"]), UserController.getAllUsers)
-  .get("/refresh",  UserController.refreshTokens)
-  .patch("/logout", roleAuth(["USER","ADMIN"]), UserController.logoutUser);
+  .get("/refresh", UserController.refreshTokens)
+  .patch("/verify", UserController.verifyUser)
+  .patch("/logout", roleAuth(["USER", "ADMIN"]), UserController.logoutUser)
+  .patch(
+    "/block-unblock",
+    roleAuth(["ADMIN"]),
+    UserController.changeBlockStatus
+  )
+  .get("/users", UserController.filteredUser)
+  .post("/send-email", UserController.emailSend)
+  .post("/forgot-password", UserController.forgotPassword)
+  .patch("/update-password", UserController.updatePassword);
 
 export default router;

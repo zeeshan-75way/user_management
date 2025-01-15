@@ -1,66 +1,55 @@
 {
   "/register": {
     "post": {
-      "tags": ["User"],
       "summary": "Register a new user",
-      "operationId": "registerUser",
+      "operationId": "createUser",
+      "tags": ["Admin"],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
       "requestBody": {
-        "description": "User registration details",
+        "description": "User registration data",
         "required": true,
         "content": {
           "application/json": {
             "schema": {
               "type": "object",
               "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "The name for the user",
-                  "example": "john_doe"
-                },
-                "password": {
-                  "type": "string",
-                  "description": "The password for the user",
-                  "example": "P@ssw0rd123"
-                },
-                "email": {
-                  "type": "string",
-                  "description": "The email address of the user",
-                  "example": "john.doe@example.com"
-                }
+                "name": { "type": "string" },
+                "email": { "type": "string" },
+                "password": { "type": "string" },
+                "role": { "type": "string", "enum": ["USER", "ADMIN"] }
               },
-              "required": ["username", "password", "email"]
+              "required": ["name", "email", "password", "role"]
             }
           }
         }
       },
       "responses": {
         "200": {
-          "description": "User registered successfully",
+          "description": "User created successfully",
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "message": {
-                    "type": "string",
-                    "example": "User registered successfully"
-                  }
+                  "message": { "type": "string" },
+                  "data": { "type": "object" }
                 }
               }
             }
           }
         },
         "400": {
-          "description": "Bad request, validation error",
+          "description": "User already exists or invalid data",
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "error": {
-                    "type": "string",
-                    "example": "Validation error"
-                  }
+                  "message": { "type": "string" }
                 }
               }
             }
@@ -71,9 +60,9 @@
   },
   "/login": {
     "post": {
-      "tags": ["User"],
-      "summary": "Login an existing user",
+      "summary": "Login a user",
       "operationId": "loginUser",
+      "tags": ["User"],
       "requestBody": {
         "description": "User login credentials",
         "required": true,
@@ -82,16 +71,8 @@
             "schema": {
               "type": "object",
               "properties": {
-                "email": {
-                  "type": "string",
-                  "description": "The email for the user",
-                  "example": "john_doe@gmail.com"
-                },
-                "password": {
-                  "type": "string",
-                  "description": "The password for the user",
-                  "example": "P@ssw0rd123"
-                }
+                "email": { "type": "string" },
+                "password": { "type": "string" }
               },
               "required": ["email", "password"]
             }
@@ -106,31 +87,22 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "message": {
-                    "type": "string",
-                    "example": "Login successful"
-                  },
-                  "token": {
-                    "type": "string",
-                    "description": "Authentication token",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                  }
+                  "accessToken": { "type": "string" },
+                  "refreshToken": { "type": "string" },
+                  "message": { "type": "string" }
                 }
               }
             }
           }
         },
-        "401": {
-          "description": "Invalid credentials",
+        "400": {
+          "description": "Invalid credentials or unverified user",
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "error": {
-                    "type": "string",
-                    "example": "Invalid credentials"
-                  }
+                  "message": { "type": "string" }
                 }
               }
             }
@@ -141,9 +113,9 @@
   },
   "/all": {
     "get": {
-      "tags": ["User"],
       "summary": "Get all users (Admin only)",
       "operationId": "getAllUsers",
+      "tags": ["Admin"],
       "security": [
         {
           "bearerAuth": []
@@ -151,7 +123,7 @@
       ],
       "responses": {
         "200": {
-          "description": "List of users",
+          "description": "List of all users",
           "content": {
             "application/json": {
               "schema": {
@@ -159,21 +131,13 @@
                 "items": {
                   "type": "object",
                   "properties": {
-                    "id": {
-                      "type": "integer",
-                      "description": "User ID",
-                      "example": 1
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "The name of the user",
-                      "example": "john_doe"
-                    },
-                    "email": {
-                      "type": "string",
-                      "description": "The email address of the user",
-                      "example": "john.doe@example.com"
-                    }
+                    "id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "email": { "type": "string" },
+                    "role": { "type": "string" },
+                    "isVerified": { "type": "boolean" },
+                    "isBlocked": { "type": "boolean" },
+                    "isActive": { "type": "boolean" }
                   }
                 }
               }
@@ -181,15 +145,106 @@
           }
         },
         "403": {
-          "description": "Forbidden, admin required",
+          "description": "Forbidden, Admin access required",
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
                 "properties": {
-                  "error": {
-                    "type": "string",
-                    "example": "Forbidden, you do not have the required permissions"
+                  "message": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/refresh": {
+    "get": {
+      "summary": "Refresh access and refresh tokens",
+      "operationId": "refreshTokens",
+      "tags": ["User"],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Tokens refreshed successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accessToken": { "type": "string" },
+                  "refreshToken": { "type": "string" },
+                  "message": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Invalid refresh token",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/verify": {
+    "patch": {
+      "summary": "Verify user with token",
+      "operationId": "verifyUser",
+      "tags": ["User"],
+      "requestBody": {
+        "description": "User verification token and new password",
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "token": { "type": "string" },
+                "password": { "type": "string" }
+              },
+              "required": ["token", "password"]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "data": { "type": "object" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
                   }
                 }
               }
@@ -199,6 +254,232 @@
       }
     }
   },
+  "/logout": {
+    "patch": {
+      "summary": "Logout a user",
+      "operationId": "logoutUser",
+      "tags": ["User"],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Logout successful",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/block-unblock": {
+    "patch": {
+      "summary": "Block or unblock a user (Admin only)",
+      "operationId": "changeBlockStatus",
+      "tags": ["Admin"],
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "requestBody": {
+        "description": "User ID and block status",
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "userId": { "type": "string" },
+                "isBlocked": { "type": "boolean" }
+              },
+              "required": ["userId", "isBlocked"]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User block status changed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "User not found or invalid data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/users": {
+    "get": {
+      "summary": "Filter users",
+      "operationId": "filteredUser",
+      "tags": ["Admin"],
+      "responses": {
+        "200": {
+          "description": "Filtered list of users",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "startDate": { "type": "string" },
+                    "endDate": { "type": "string" },
+                    "isActive": { "type": "string" },
+                    "isVerified": { "type": "string" },
+                    "isKYCCompleted": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/send-email": {
+    "post": {
+      "summary": "Send an email",
+      "operationId": "emailSend",
+      "tags": ["Admin", "User"],
+      "requestBody": {
+        "description": "Email content",
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": { "type": "string" },
+                "emailType": { "type": "string" }
+              },
+              "required": ["email", "emailType"]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Email sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/forgot-password": {
+    "post": {
+      "summary": "Request password reset",
+      "operationId": "forgotPassword",
+      "tags": ["User"],
+      "requestBody": {
+        "description": "Email to reset password",
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": { "type": "string" }
+              },
+              "required": ["email"]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset email sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/update-password": {
+    "patch": {
+      "summary": "Update user password",
+      "operationId": "updatePassword",
+      "tags": ["User"],
+      "requestBody": {
+        "description": "New password and confirmation",
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "password": { "type": "string" },
+                "confirmPassword": { "type": "string" }
+              },
+              "required": ["password", "confirmPassword"]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
   "components": {
     "securitySchemes": {
       "bearerAuth": {

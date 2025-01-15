@@ -11,11 +11,6 @@ export const createUser = [
     .withMessage("email is required")
     .isString()
     .withMessage("email must be a string"),
-  body("password")
-    .notEmpty()
-    .withMessage("password is required")
-    .isString()
-    .withMessage("password must be a string"),
   body("role")
     .notEmpty()
     .withMessage("role is required")

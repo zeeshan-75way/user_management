@@ -18,13 +18,17 @@ const UserSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: true,
     },
     role: {
       type: String,
       required: true,
       enum: ["USER", "ADMIN"],
       default: "USER",
+    },
+    isVerified: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
     isActive: {
       type: Boolean,
@@ -48,6 +52,18 @@ const UserSchema = new Schema<IUser>(
     },
     refreshToken: {
       type: String,
+    },
+    verifyToken: {
+      type: String,
+    },
+    verifyTokenExpiry: {
+      type: Date,
+    },
+    forgotPasswordToken: {
+      type: String,
+    },
+    forgotPasswordTokenExpiry: {
+      type: Date,
     },
   },
   { timestamps: true }
