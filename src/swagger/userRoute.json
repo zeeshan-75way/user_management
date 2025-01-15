@@ -1,0 +1,211 @@
+{
+  "/register": {
+    "post": {
+      "tags": ["User"],
+      "summary": "Register a new user",
+      "operationId": "registerUser",
+      "requestBody": {
+        "description": "User registration details",
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name for the user",
+                  "example": "john_doe"
+                },
+                "password": {
+                  "type": "string",
+                  "description": "The password for the user",
+                  "example": "P@ssw0rd123"
+                },
+                "email": {
+                  "type": "string",
+                  "description": "The email address of the user",
+                  "example": "john.doe@example.com"
+                }
+              },
+              "required": ["username", "password", "email"]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "User registered successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "example": "User registered successfully"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Bad request, validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "type": "string",
+                    "example": "Validation error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/login": {
+    "post": {
+      "tags": ["User"],
+      "summary": "Login an existing user",
+      "operationId": "loginUser",
+      "requestBody": {
+        "description": "User login credentials",
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "description": "The email for the user",
+                  "example": "john_doe@gmail.com"
+                },
+                "password": {
+                  "type": "string",
+                  "description": "The password for the user",
+                  "example": "P@ssw0rd123"
+                }
+              },
+              "required": ["email", "password"]
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Login successful",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "message": {
+                    "type": "string",
+                    "example": "Login successful"
+                  },
+                  "token": {
+                    "type": "string",
+                    "description": "Authentication token",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Invalid credentials",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "type": "string",
+                    "example": "Invalid credentials"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "/all": {
+    "get": {
+      "tags": ["User"],
+      "summary": "Get all users (Admin only)",
+      "operationId": "getAllUsers",
+      "security": [
+        {
+          "bearerAuth": []
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "List of users",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "description": "User ID",
+                      "example": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "The name of the user",
+                      "example": "john_doe"
+                    },
+                    "email": {
+                      "type": "string",
+                      "description": "The email address of the user",
+                      "example": "john.doe@example.com"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Forbidden, admin required",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "error": {
+                    "type": "string",
+                    "example": "Forbidden, you do not have the required permissions"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
